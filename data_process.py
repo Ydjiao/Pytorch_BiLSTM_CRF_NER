@@ -62,9 +62,34 @@ def merge_file(files, target_path):
             file.write(text)
 
 
+# 生成词表
+def generate_vocab():
+    df = pd.read_csv(TRAIN_SAMPLE_PATH, usecols=[0], names=['word'])
+    vocab_list = [WORD_PAD, WORD_UNK] + df['word'].value_counts().keys().tolist()
+    vocab_list = vocab_list[:VOCAB_SIZE]
+    vocab_dict = {v: k for k, v in enumerate(vocab_list)}
+    vocab = pd.DataFrame(list(vocab_dict.items()))
+    vocab.to_csv(VOCAB_PATH, header=None, index=None)
+
+
+# 生成标签表
+def generate_label():
+    df = pd.read_csv(TRAIN_SAMPLE_PATH, usecols=[1], names=['label'])
+    label_list = df['label'].value_counts().keys().tolist()
+    label_dict = {v: k for k, v in enumerate(label_list)}
+    label = pd.DataFrame(list(label_dict.items()))
+    label.to_csv(LABEL_PATH, header=None, index=None)
+
+
 if __name__ == '__main__':
     # 建立文字和标签对应关系
     # generate_annotation()
 
     # 拆分训练集和测试集
-    split_sample()
+    # split_sample()
+
+    # 生成词表
+    generate_vocab()
+
+    # 生成标签表
+    generate_label()
