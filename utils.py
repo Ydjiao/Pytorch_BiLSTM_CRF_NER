@@ -36,7 +36,7 @@ class Dataset(data.Dataset):
             else:
                 i += 1
 
-    def __len__(self, len):
+    def __len__(self):
         return len(self.points) -1
 
     def __getitem__(self, index):
@@ -47,5 +47,39 @@ class Dataset(data.Dataset):
         target = [self.label2id.get(l, label_o_id) for l in df['label']]
         return input, target
 
+
+def collate_fn(batch):
+    batch.sort(key=lambda x: len(x[0]), reverse=True)
+    max_len = len(batch[0][0])
+    input = []
+    target = []
+    mask = []
+    for item in batch:
+        pad_len = max_len - len(item[0])
+        input.append(item[0] + [WORD_PAD_ID] * pad_len)
+        target.append(item[1] + [LABEL_O_ID] * pad_len)
+        mask.append([1] * len(item[0]) + [0] * pad_len)
+    return torch.tensor(input), torch.tensor(target), torch.tensor(mask).bool()
+
+
+def extract(label, text):
+    i = 0
+    res = []
+    while i < len(label):
+        if label[i] != 'O':
+            prefix, name = label[i].split('-')
+            start = end = i
+            i += 1
+            while i < len(label) and label[i] == 'I-' + name:
+                end = i
+                i += 1
+            res.append([name, text[start:end + 1]])
+        else:
+            i += 1
+    return res
+
+
 if __name__ == '__main__':
     dataset = Dataset()
+    loader = data.DataLoader(dataset, batch_size=100, collate_fn=collate_fn)
+    print(iter(loader).next())
